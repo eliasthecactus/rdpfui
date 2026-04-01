@@ -1,0 +1,28 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Build output
+release/
+bin/
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+
+# macOS
+.DS_Store
+
+# Go vendor
+/vendor/
+
+# Logs
+*.log
+
+rdpfui
