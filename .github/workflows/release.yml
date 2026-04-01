@@ -53,7 +53,7 @@ jobs:
         id: version
         run: echo "version=1.0.${{ github.run_number }}" >> $GITHUB_OUTPUT
 
-      - name: Build binary    
+      - name: Build binary
         env:
           CGO_ENABLED: 1
           GOOS: ${{ matrix.goos }}
@@ -61,16 +61,19 @@ jobs:
         run: |
           mkdir -p release
           
-          # 1. Define the base name with the version and platform
-          FILENAME="rdpfui-${{ steps.version.outputs.version }}-${{ matrix.platform }}"
+          # Calculate version locally to ensure it's never empty
+          BUILD_VER="1.0.${{ github.run_number }}"
           
-          # 2. Add .exe suffix only for Windows
+          # Set the base name
+          FILENAME="rdpfui-${BUILD_VER}-${{ matrix.platform }}"
+          
+          # Add extension for windows
           if [ "${{ matrix.goos }}" = "windows" ]; then 
             FILENAME="${FILENAME}.exe"
           fi
           
-          # 3. Build using the final variable
-          go build -o release/$FILENAME          
+          echo "Building: $FILENAME"
+          go build -o release/$FILENAME
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
