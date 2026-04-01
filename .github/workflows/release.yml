@@ -43,13 +43,8 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             "$api_url")
 
-          count=$(echo "$releases" | python3 - "$VERSION" <<'PY'
-          import json,sys
-          releases = json.load(sys.stdin)
-          base = sys.argv[1]
-          print(sum(1 for r in releases if r.get('tag_name', '').startswith(base + '.')))
-          PY
-          )
+          count=$(echo "$releases" | grep -o '"tag_name":' | wc -l)
+          count=$(echo "$releases" | grep -o "\"tag_name\": \"${VERSION}\." | wc -l)
           build_num=$((count + 1))
           full_version="${VERSION}.${build_num}"
           echo "version=${full_version}" >> $GITHUB_OUTPUT
