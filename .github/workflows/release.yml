@@ -67,13 +67,16 @@ jobs:
           # Set the base name
           FILENAME="rdpfui-${BUILD_VER}-${{ matrix.platform }}"
           
-          # Add extension for windows
+          LDFLAGS=""
           if [ "${{ matrix.goos }}" = "windows" ]; then 
             FILENAME="${FILENAME}.exe"
+            LDFLAGS="-H=windowsgui" # This hides the console window
           fi
           
           echo "Building: $FILENAME"
-          go build -o release/$FILENAME
+          # Added -ldflags here
+          go build -ldflags="$LDFLAGS" -o release/$FILENAME
+          
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
