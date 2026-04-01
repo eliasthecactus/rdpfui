@@ -6,13 +6,10 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write # Needed to create releases
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    outputs:
-      version: ${{ steps.version.outputs.version }}
     strategy:
       matrix:
         include:
@@ -26,56 +23,61 @@ jobs:
             goos: windows
             platform: windows-amd64
 
+    runs-on: ${{ matrix.os }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Install Linux Dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxcursor-dev libxrandr-dev libinerama-dev libxi-dev libgl1-mesa-dev libxxf86vm-dev
+
       - uses: actions/setup-go@v4
         with:
           go-version: '1.20'
-      - name: Compute release version
-        id: version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: 1.0
-        run: |
-          api_url="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=100"
-          releases=$(curl -s \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "$api_url")
+          cache: true
 
-          count=$(echo "$releases" | grep -o '"tag_name":' | wc -l)
-          count=$(echo "$releases" | grep -o "\"tag_name\": \"${VERSION}\." | wc -l)
-          build_num=$((count + 1))
-          full_version="${VERSION}.${build_num}"
-          echo "version=${full_version}" >> $GITHUB_OUTPUT
-          echo "platform=${{ matrix.platform }}" >> $GITHUB_OUTPUT
+      - name: Compute version
+        id: version
+        run: echo "version=1.0.${{ github.run_number }}" >> $GITHUB_OUTPUT
+
       - name: Build binary
+        env:
+          CGO_ENABLED: 1
+          GOOS: ${{ matrix.goos }}
+        shell: bash
         run: |
           mkdir -p release
-          GOOS=${{ matrix.goos }} GOARCH=amd64 go build -o release/rdpfui-${{ steps.version.outputs.version }}-${{ matrix.platform }}
-        shell: bash
-      - uses: actions/upload-artifact@v4
+          # Note: Extension added for Windows (.exe)
+          EXT=""
+          if [ "${{ matrix.goos }}" = "windows" ]; then EXT=".exe"; fi
+          
+          go build -o release/rdpfui-${{ steps.version.outputs.version }}-${{ matrix.platform }}$EXT
+          
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: rdpfui-${{ steps.version.outputs.version }}-${{ matrix.platform }}
-          path: release/rdpfui-${{ steps.version.outputs.version }}-${{ matrix.platform }}
+          name: rdpfui-${{ matrix.platform }}
+          path: release/*
 
   release:
     needs: build
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          path: release
+          path: artifacts
+          merge-multiple: true # Flattens the folder structure
+          
       - name: Create GitHub release
         uses: ncipollo/release-action@v2
         with:
-          tag: ${{ needs.build.outputs.version }}
-          name: Release ${{ needs.build.outputs.version }}
+          tag: v${{ needs.build.outputs.version }}
+          name: Release v${{ needs.build.outputs.version }}
           body: Automated binaries built from main branch.
-          files: release/*
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: artifacts/*
+          token: ${{ secrets.GITHUB_TOKEN }}
