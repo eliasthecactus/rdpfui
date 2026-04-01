@@ -82,10 +82,10 @@ jobs:
           merge-multiple: true # Flattens the folder structure
           
       - name: Create GitHub release
-        uses: ncipollo/release-action@v1 # Changed from v2 to v1
+        uses: ncipollo/release-action@v1
         with:
           tag: v${{ needs.build.outputs.version }}
           name: Release v${{ needs.build.outputs.version }}
           body: Automated binaries built from main branch.
-          files: artifacts/*
+          artifacts: "artifacts/*"  # Changed 'files' to 'artifacts'
           token: ${{ secrets.GITHUB_TOKEN }}
