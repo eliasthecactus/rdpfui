@@ -38,15 +38,14 @@ jobs:
           VERSION: 1.0
         run: |
           api_url="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=100"
-          releases=$(curl -sS -w "\nHTTP_STATUS:%{http_code}\n" \
-          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-          -H "Accept: application/vnd.github+json" \
-          "$api_url")
+          releases=$(curl -s \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "$api_url")
 
-          echo "$releases"
-          count=$(python3 - "$releases" "$VERSION" <<'PY'
+          count=$(echo "$releases" | python3 - "$VERSION" <<'PY'
           import json,sys
-          releases = json.loads(sys.stdin.read())
+          releases = json.load(sys.stdin)
           base = sys.argv[1]
           print(sum(1 for r in releases if r.get('tag_name', '').startswith(base + '.')))
           PY
