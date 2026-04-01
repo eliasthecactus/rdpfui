@@ -82,7 +82,7 @@ jobs:
           merge-multiple: true # Flattens the folder structure
           
       - name: Create GitHub release
-        uses: ncipollo/release-action@v2
+        uses: ncipollo/release-action@v1 # Changed from v2 to v1
         with:
           tag: v${{ needs.build.outputs.version }}
           name: Release v${{ needs.build.outputs.version }}
