@@ -34,8 +34,16 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-dev libxcursor-dev libxrandr-dev libinerama-dev libxi-dev libgl1-mesa-dev libxxf86vm-dev
-
+          sudo apt-get install -y \
+            libx11-dev \
+            libxcursor-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libxxf86vm-dev \
+            libxfixes-dev \
+            pkg-config
       - uses: actions/setup-go@v4
         with:
           go-version: '1.20'
