@@ -82,3 +82,5 @@ Logs are written to:
 ```
 
 If a matching `.rdp` file is not opened, first check the latest log file in that folder and confirm the `rdpfui-script` scheduled task is running.
+
+The watcher uses both filesystem events and periodic folder scans. This helps with shared, synced, or redirected folders where Windows can miss rename or move events.

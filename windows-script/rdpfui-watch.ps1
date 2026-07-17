@@ -200,16 +200,19 @@ function Invoke-RdpFile {
         return
     }
 
+    $file = Get-Item -LiteralPath $FilePath -ErrorAction Stop
     $key = [System.IO.Path]::GetFullPath($FilePath).ToLowerInvariant()
-    if ($script:Processed.ContainsKey($key)) {
+    $fingerprint = "{0}:{1}" -f $file.Length, $file.LastWriteTimeUtc.Ticks
+    if ($script:Processed.ContainsKey($key) -and $script:Processed[$key] -eq $fingerprint) {
         return
     }
-    $script:Processed[$key] = $true
 
     if (-not (Wait-FileReady -FilePath $FilePath)) {
         Write-RdpfuiLog "Skipped locked file: $FilePath"
         return
     }
+
+    $script:Processed[$key] = $fingerprint
 
     if (-not (Test-RdpFileSafe -FilePath $FilePath -Folder $folder)) {
         return
@@ -220,6 +223,8 @@ function Invoke-RdpFile {
     $destination = Join-Path $script:StagingFolder "$timestamp-$safeName"
 
     Move-Item -LiteralPath $FilePath -Destination $destination -Force
+    Write-RdpfuiLog "Accepted regex and safety checks: $FilePath"
+    Write-RdpfuiLog "Moved to staging: $destination"
     Write-RdpfuiLog "Opening via mstsc.exe: $destination"
     Start-Process -FilePath "$env:WINDIR\System32\mstsc.exe" -ArgumentList "`"$destination`""
 }
@@ -266,6 +271,7 @@ try {
     while ($true) {
         $event = Wait-Event -Timeout $script:PollIntervalSeconds
         if ($null -eq $event) {
+            Scan-ExistingFiles
             continue
         }
 
