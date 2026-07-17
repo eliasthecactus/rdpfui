@@ -32,8 +32,7 @@ function Test-TaskInstalled {
         $null = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop
         return $true
     } catch {
-        $null = schtasks.exe /Query /TN $TaskName 2>$null
-        return $LASTEXITCODE -eq 0
+        return $false
     }
 }
 
@@ -125,10 +124,7 @@ function Uninstall-App {
         try {
             Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction Stop
         } catch {
-            $null = schtasks.exe /Delete /TN $TaskName /F
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to delete scheduled task '$TaskName'."
-            }
+            throw "Failed to delete scheduled task '$TaskName': $($_.Exception.Message)"
         }
         Write-Info "Removed scheduled task: $TaskName"
     } else {
