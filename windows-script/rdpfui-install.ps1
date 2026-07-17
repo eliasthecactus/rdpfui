@@ -131,7 +131,7 @@ function Uninstall-App {
         Write-Info "Scheduled task is not installed."
     }
 
-    $removeFiles = Read-Choice -Prompt "Remove installed files and config from $InstallRoot? y/n" -Allowed @("y", "n") -Default "n"
+    $removeFiles = Read-Choice -Prompt "Remove installed files and config from ${InstallRoot}? y/n" -Allowed @("y", "n") -Default "n"
     if ($removeFiles -eq "y" -and (Test-Path -LiteralPath $InstallRoot)) {
         Remove-Item -LiteralPath $InstallRoot -Recurse -Force
         Write-Info "Removed $InstallRoot"
