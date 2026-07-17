@@ -25,6 +25,12 @@ go build -o rdpfui
 ./rdpfui
 ```
 
+## Windows script edition
+
+There is also a Windows-only, no-UI script edition in `windows-script/`. It installs per user, creates a scheduled task at logon, watches configured folders, validates `.rdp` files with content regex rules, moves accepted files to a staging folder, and opens them with `mstsc.exe`.
+
+The release workflow publishes it as a zip. Inside the zip, run `install.bat` to install or `uninstall.bat` to remove it.
+
 ## Icon
 
 A built-in SVG tray icon is embedded automatically. If you want to replace it, update `resources/icon.svg` and recompile.

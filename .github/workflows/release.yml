@@ -87,16 +87,25 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
           merge-multiple: true # Flattens the folder structure
+
+      - name: Package Windows script edition
+        shell: bash
+        run: |
+          SCRIPT_ZIP="artifacts/rdpfui-script-windows-v${{ needs.build.outputs.version }}.zip"
+          zip -r "$SCRIPT_ZIP" windows-script \
+            -x "windows-script/.DS_Store"
           
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
         with:
           tag: v${{ needs.build.outputs.version }}
           name: Release v${{ needs.build.outputs.version }}
-          body: Automated binaries built from main branch.
+          body: Automated binaries and Windows script edition built from main branch.
           artifacts: "artifacts/*"  # Changed 'files' to 'artifacts'
           token: ${{ secrets.GITHUB_TOKEN }}

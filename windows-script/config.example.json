@@ -1,0 +1,26 @@
+{
+  "pollIntervalSeconds": 3,
+  "stagingFolder": "%LOCALAPPDATA%\\rdpfui-script\\staging",
+  "logFolder": "%LOCALAPPDATA%\\rdpfui-script\\logs",
+  "maxFileSizeKB": 256,
+  "allowFoldersWithoutRegex": false,
+  "blockedDirectives": [
+    "drivestoredirect:s:",
+    "redirectclipboard:i:1",
+    "redirectprinters:i:1",
+    "redirectsmartcards:i:1",
+    "redirectcomports:i:1",
+    "redirectposdevices:i:1",
+    "audiocapturemode:i:1"
+  ],
+  "folders": [
+    {
+      "path": "%USERPROFILE%\\Downloads",
+      "recursive": false,
+      "allowWithoutRegex": false,
+      "contentRegex": [
+        "^full address:s:.*\\.example\\.com(:\\d+)?$"
+      ]
+    }
+  ]
+}
