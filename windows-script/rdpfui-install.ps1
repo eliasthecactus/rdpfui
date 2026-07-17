@@ -64,8 +64,20 @@ function Copy-AppFiles {
         New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
     }
 
-    Copy-Item -LiteralPath (Join-Path $SourceRoot "rdpfui-watch.ps1") -Destination (Join-Path $InstallRoot "rdpfui-watch.ps1") -Force
-    Copy-Item -LiteralPath $SourceVersionPath -Destination $VersionPath -Force
+    foreach ($file in @(
+        "install.bat",
+        "uninstall.bat",
+        "rdpfui-install.ps1",
+        "rdpfui-watch.ps1",
+        "config.example.json",
+        "README.md",
+        "VERSION"
+    )) {
+        $source = Join-Path $SourceRoot $file
+        if (Test-Path -LiteralPath $source -PathType Leaf) {
+            Copy-Item -LiteralPath $source -Destination (Join-Path $InstallRoot $file) -Force
+        }
+    }
 
     if (-not (Test-Path -LiteralPath $ConfigPath -PathType Leaf)) {
         Copy-Item -LiteralPath (Join-Path $SourceRoot "config.example.json") -Destination $ConfigPath -Force

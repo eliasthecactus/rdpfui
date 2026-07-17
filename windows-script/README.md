@@ -24,6 +24,8 @@ rdpfui-script
 
 The task starts the watcher at user logon. It does not require administrator rights.
 
+After installation, the zip and extracted package folder can be deleted. The installed folder contains `install.bat`, `uninstall.bat`, and `rdpfui-install.ps1` for later repair, upgrade, or uninstall operations.
+
 ## Uninstall
 
 Run:
