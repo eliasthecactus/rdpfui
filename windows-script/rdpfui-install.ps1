@@ -36,6 +36,18 @@ function Test-TaskInstalled {
     }
 }
 
+function Stop-InstalledTask {
+    try {
+        $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+        if ($task.State -eq "Running") {
+            Stop-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+            Write-Info "Stopped running scheduled task: $TaskName"
+        }
+    } catch {
+        return
+    }
+}
+
 function Read-Choice {
     param(
         [Parameter(Mandatory = $true)][string]$Prompt,
@@ -112,17 +124,20 @@ function Install-Task {
     $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 
     try {
+        Stop-InstalledTask
+
         $action = New-ScheduledTaskAction -Execute $powershell -Argument $arguments -WorkingDirectory $InstallRoot
         $trigger = New-ScheduledTaskTrigger -AtLogOn -User $currentUser
         $principal = New-ScheduledTaskPrincipal -UserId $currentUser -LogonType Interactive -RunLevel Limited
         $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew
 
         Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
+        Start-ScheduledTask -TaskName $TaskName
     } catch {
         throw "Failed to create scheduled task '$TaskName': $($_.Exception.Message)"
     }
 
-    Write-Info "Scheduled task installed: $TaskName"
+    Write-Info "Scheduled task installed and started: $TaskName"
 }
 
 function Install-App {
@@ -134,6 +149,7 @@ function Install-App {
 function Uninstall-App {
     if (Test-TaskInstalled) {
         try {
+            Stop-InstalledTask
             Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction Stop
         } catch {
             throw "Failed to delete scheduled task '$TaskName': $($_.Exception.Message)"

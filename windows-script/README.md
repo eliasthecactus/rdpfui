@@ -22,7 +22,7 @@ Then it creates this scheduled task:
 rdpfui-script
 ```
 
-The task starts the watcher at user logon. It does not require administrator rights.
+The installer starts the task immediately. The task also starts the watcher at future user logons. It does not require administrator rights.
 
 After installation, the zip and extracted package folder can be deleted. The installed folder contains `install.bat`, `uninstall.bat`, and `rdpfui-install.ps1` for later repair, upgrade, or uninstall operations.
 
@@ -80,3 +80,5 @@ Logs are written to:
 ```text
 %LOCALAPPDATA%\rdpfui-script\logs
 ```
+
+If a matching `.rdp` file is not opened, first check the latest log file in that folder and confirm the `rdpfui-script` scheduled task is running.
