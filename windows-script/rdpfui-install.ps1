@@ -28,8 +28,13 @@ function Get-InstalledVersion {
 }
 
 function Test-TaskInstalled {
-    $null = schtasks.exe /Query /TN $TaskName 2>$null
-    return $LASTEXITCODE -eq 0
+    try {
+        $null = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+        return $true
+    } catch {
+        $null = schtasks.exe /Query /TN $TaskName 2>$null
+        return $LASTEXITCODE -eq 0
+    }
 }
 
 function Read-Choice {
@@ -81,11 +86,29 @@ function Copy-AppFiles {
 function Install-Task {
     $watchScript = Join-Path $InstallRoot "rdpfui-watch.ps1"
     $powershell = Join-Path $env:WINDIR "System32\WindowsPowerShell\v1.0\powershell.exe"
-    $taskAction = "`"$powershell`" -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$watchScript`" -ConfigPath `"$ConfigPath`""
 
-    $null = schtasks.exe /Create /TN $TaskName /SC ONLOGON /TR $taskAction /RL LIMITED /F
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to create scheduled task '$TaskName'."
+    if (-not (Test-Path -LiteralPath $powershell -PathType Leaf)) {
+        throw "Windows PowerShell not found: $powershell"
+    }
+    if (-not (Test-Path -LiteralPath $watchScript -PathType Leaf)) {
+        throw "Watcher script not found: $watchScript"
+    }
+    if (-not (Test-Path -LiteralPath $ConfigPath -PathType Leaf)) {
+        throw "Config file not found: $ConfigPath"
+    }
+
+    $arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$watchScript`" -ConfigPath `"$ConfigPath`""
+    $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+
+    try {
+        $action = New-ScheduledTaskAction -Execute $powershell -Argument $arguments -WorkingDirectory $InstallRoot
+        $trigger = New-ScheduledTaskTrigger -AtLogOn -User $currentUser
+        $principal = New-ScheduledTaskPrincipal -UserId $currentUser -LogonType Interactive -RunLevel LeastPrivilege
+        $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew
+
+        Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
+    } catch {
+        throw "Failed to create scheduled task '$TaskName': $($_.Exception.Message)"
     }
 
     Write-Info "Scheduled task installed: $TaskName"
@@ -99,9 +122,13 @@ function Install-App {
 
 function Uninstall-App {
     if (Test-TaskInstalled) {
-        $null = schtasks.exe /Delete /TN $TaskName /F
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to delete scheduled task '$TaskName'."
+        try {
+            Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction Stop
+        } catch {
+            $null = schtasks.exe /Delete /TN $TaskName /F
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to delete scheduled task '$TaskName'."
+            }
         }
         Write-Info "Removed scheduled task: $TaskName"
     } else {
