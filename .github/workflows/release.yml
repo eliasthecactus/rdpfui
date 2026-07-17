@@ -98,8 +98,10 @@ jobs:
         shell: bash
         run: |
           SCRIPT_ZIP="artifacts/rdpfui-script-windows-v${{ needs.build.outputs.version }}.zip"
-          zip -r "$SCRIPT_ZIP" windows-script \
-            -x "windows-script/.DS_Store"
+          mkdir -p package/windows-script
+          cp -R windows-script/. package/windows-script/
+          printf '%s\n' "${{ needs.build.outputs.version }}" > package/windows-script/VERSION
+          (cd package && zip -r "../$SCRIPT_ZIP" windows-script -x "windows-script/.DS_Store")
           
       - name: Create GitHub release
         uses: ncipollo/release-action@v1

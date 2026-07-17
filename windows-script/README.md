@@ -40,6 +40,8 @@ The uninstaller removes the scheduled task and asks whether installed files and 
 
 Run `install.bat` again. If the script edition is already installed, it asks whether to repair, upgrade, uninstall, or cancel.
 
+Release zips include a `VERSION` file generated from the GitHub release version. The installer copies that value into `%LOCALAPPDATA%\rdpfui-script\VERSION` and uses it for upgrade/repair prompts.
+
 ## Config
 
 After install, edit:
